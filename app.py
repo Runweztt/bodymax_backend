@@ -6,6 +6,7 @@ from routes.members import bp as members_bp
 from routes.attendance import bp as attendance_bp
 from routes.finance import bp as finance_bp
 from routes.demo_data import bp as demo_data_bp
+from routes.expiry import bp as expiry_bp
 
 
 def create_app():
@@ -17,6 +18,7 @@ def create_app():
     app.register_blueprint(attendance_bp)
     app.register_blueprint(finance_bp)
     app.register_blueprint(demo_data_bp)
+    app.register_blueprint(expiry_bp)
 
     @app.get("/api/health")
     def health():

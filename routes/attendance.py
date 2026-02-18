@@ -3,6 +3,7 @@ from middleware.auth import require_auth
 from middleware.idempotency import idempotent
 from db import get_db
 from datetime import date
+from services.sms import checkin_sms
 
 bp = Blueprint("attendance", __name__, url_prefix="/api/attendance")
 
@@ -32,6 +33,10 @@ def checkin():
             "member_id": member_id,
             "attendance_date": today,
         }).execute()
+        # Send check-in SMS
+        member = db.table("members").select("full_name, phone").eq("id", member_id).single().execute()
+        if member.data:
+            checkin_sms(member.data["full_name"], member.data.get("phone"))
         return jsonify({"ok": True})
     except Exception as e:
         if "uq_attendance_member_date" in str(e):

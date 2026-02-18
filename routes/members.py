@@ -3,6 +3,7 @@ from middleware.auth import require_auth
 from middleware.idempotency import idempotent
 from db import get_db
 from datetime import datetime, timedelta
+from services.sms import welcome_sms, payment_sms
 
 bp = Blueprint("members", __name__, url_prefix="/api")
 
@@ -51,6 +52,9 @@ def create_member():
         )
         member_data = member.data[0]
 
+        # Send welcome SMS
+        welcome_sms(full_name, body.get("phone"))
+
         if payment_method:
             base_price = body.get("amount", 30000)
             db.table("payments").insert({
@@ -58,6 +62,8 @@ def create_member():
                 "amount": base_price,
                 "payment_method": payment_method,
             }).execute()
+            # Send payment confirmation SMS
+            payment_sms(full_name, body.get("phone"), base_price)
 
         return jsonify(member_data), 201
 
