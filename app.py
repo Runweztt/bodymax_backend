@@ -20,6 +20,10 @@ def create_app():
     app.register_blueprint(demo_data_bp)
     app.register_blueprint(expiry_bp)
 
+    @app.get("/")
+    def index():
+        return {"message": "BodyMax Gym Backend API is Live!", "version": "1.0.0"}
+
     @app.get("/api/health")
     def health():
         return {"status": "ok backend is running smoothly"}
@@ -27,6 +31,7 @@ def create_app():
     return app
 
 
+app = create_app()
+
 if __name__ == "__main__":
-    app = create_app()
     app.run(debug=True, port=5000)
