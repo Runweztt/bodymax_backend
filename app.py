@@ -7,6 +7,8 @@ from routes.attendance import bp as attendance_bp
 from routes.finance import bp as finance_bp
 from routes.demo_data import bp as demo_data_bp
 from routes.expiry import bp as expiry_bp
+from routes.expenses import bp as expenses_bp
+from routes.branches import bp as branches_bp
 
 
 def create_app():
@@ -19,6 +21,8 @@ def create_app():
     app.register_blueprint(finance_bp)
     app.register_blueprint(demo_data_bp)
     app.register_blueprint(expiry_bp)
+    app.register_blueprint(expenses_bp)
+    app.register_blueprint(branches_bp)
 
     @app.get("/")
     def index():
