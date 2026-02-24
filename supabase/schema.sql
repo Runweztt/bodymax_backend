@@ -19,6 +19,7 @@ create table public.members (
     expiry_date date not null,
     status text not null default 'Active' check (status in ('Active', 'Expiring Soon', 'Expired')),
     group_id uuid, -- For Group Membership linking
+    photo_url text, -- For member portrait
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -72,3 +73,17 @@ create policy "Managers can view all payments" on public.payments for all to aut
 create unique index idx_members_phone on public.members (phone) where phone is not null;
 create unique index idx_members_email on public.members (email) where email is not null;
 alter table public.attendance add constraint uq_attendance_member_date unique (member_id, attendance_date);
+-- Expenses Table for tracking outward cash flow
+create table public.expenses (
+    id uuid default uuid_generate_v4() primary key,
+    description text not null,
+    amount decimal(12, 2) not null,
+    category text not null,
+    branch_id uuid references public.branches(id) not null,
+    recorded_by uuid references public.profiles(id) not null,
+    date date not null default current_date,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+create index idx_expenses_branch_id on public.expenses(branch_id);
+create index idx_expenses_date on public.expenses(date);

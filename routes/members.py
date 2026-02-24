@@ -4,6 +4,8 @@ from middleware.idempotency import idempotent
 from db import get_db
 from datetime import datetime, timedelta
 from services.sms import welcome_sms, payment_sms
+import base64
+import uuid
 
 bp = Blueprint("members", __name__, url_prefix="/api")
 
@@ -55,9 +57,33 @@ def create_member():
     duration = body.get("duration")
     payment_method = body.get("paymentMethod")
     branch_id = body.get("branchId")
+    photo_base64 = body.get("photo")
 
     if not full_name or not category:
         return jsonify({"error": "fullName and category are required"}), 400
+
+    photo_url = None
+    if photo_base64 and "," in photo_base64:
+        try:
+            # photo_base64 is expected to be "data:image/jpeg;base64,..."
+            header, encoded = photo_base64.split(",", 1)
+            file_data = base64.b64decode(encoded)
+            file_ext = "jpg" # Defaulting to jpg as per CameraCapture
+            file_name = f"{uuid.uuid4()}.{file_ext}"
+            
+            # Upload to Supabase Storage (member-photos bucket)
+            # Note: The bucket must exist in Supabase
+            res = db.storage.from_("member-photos").upload(
+                path=file_name,
+                file=file_data,
+                file_options={"content-type": "image/jpeg"}
+            )
+            
+            # Get public URL
+            photo_url = db.storage.from_("member-photos").get_public_url(file_name)
+        except Exception as e:
+            print(f"Photo upload failed: {e}")
+            # We continue even if photo upload fails, but log it
 
     # Generate Member Code if branch_id is provided
     member_code = None
@@ -88,7 +114,8 @@ def create_member():
                 "phone": body.get("phone"),
                 "email": body.get("email"),
                 "branch_id": branch_id,
-                "member_code": member_code
+                "member_code": member_code,
+                "photo_url": photo_url
             })
             .execute()
         )
