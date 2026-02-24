@@ -13,7 +13,11 @@ from routes.branches import bp as branches_bp
 
 def create_app():
     app = Flask(__name__)
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    CORS(app, resources={r"/api/*": {
+        "origins": "*",
+        "allow_headers": ["Content-Type", "Authorization", "X-Idempotency-Key"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    }})
 
     app.register_blueprint(profile_bp)
     app.register_blueprint(members_bp)
@@ -31,6 +35,17 @@ def create_app():
     @app.get("/api/health")
     def health():
         return {"status": "ok backend is running smoothly"}
+
+    @app.get("/api/health/db")
+    def health_db():
+        from db import get_db
+        try:
+            db = get_db()
+            # Simple query to test DB connectivity
+            db.table("profiles").select("count").limit(1).execute()
+            return {"status": "database_ok"}
+        except Exception as e:
+            return {"status": "database_error", "details": str(e)}, 500
 
     return app
 
